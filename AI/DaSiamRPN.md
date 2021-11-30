@@ -74,8 +74,28 @@ Siamese跟踪器的核心是度量学习。目标是学习一个嵌入空间，�
 ### 3.3 干扰感知增量学习
 
 上面小节的训练策略可以显著提高离线训练过程中的辨别力。但是，仍然很难区分具有类似属性的两个对象，如图3A。SiamFC和SiamRPN使用余弦窗口来抑制干扰。当物体运动混乱时，不能保证性能。现有的大多数基于Siamese网络的方法在快速运动或背景杂乱的情况下性能较差。综上所述，潜在的缺陷主要是由于一般的表示域和特定的目标域的不对齐造成的。在这一部分中，我们提出了一种干扰感知模块来有效地将一般表示转移到视频域。
+
+Siamese跟踪器会学习一个相似度函数$f(z,x)$，在内嵌空间$\varphi$中比较样本图片$z$和候选$x$：
 $$
-公式1-4
+f(z,x)=\varphi(z)\star\varphi(x)+b\cdot\mathbb{1}\quad(1)
+$$
+其中$\star$表示两个特征图之间的互相关性，$b\cdot\mathbb{1}$表示每个位置的偏置。选择最相似的样本对象作为目标。
+DaSiamRPN中采用非最大抑制(Non Maximum Suppression ,NMS)选择每帧潜在干扰$d_i$，然后收集一个干扰项集合
+$$
+D:= \{ \forall d_i \in D ,f(z,d_i)>h \cap d_i \ne z_t \}
+$$
+其中，$h$是预定义的阈值，$z_t$是第$t$帧的目标，集合大小为$|D|=n$。具体的，在每一帧我们首先得到$17*17*5$的候选块，然后使用NMS去除冗余候选。对于剩下的候选，大于阈值的那些选为干扰。
+之后，引入一个新的干扰感知目标函数，对前k相似度候选集$P$重排序。最后选定的目标表示为$q$：
+$$
+q=\argmax_{p_k\in P} f(z,p_k)-\frac{\hat{\alpha} \sum_{i=1}^n \alpha_i f(d_i,p_k)}{\sum_{i=1}^n \alpha_i}\quad(2)
+$$
+权重因子$\hat{\alpha}$控制干扰学习（distractor learning）的影响。$\alpha_i$控制每个干扰$d_i$的影响。值得注意的是，直接计算的复杂度和内存开销会增加n倍  。因为式(1)是线性操作，可以利用这个特性加速：
+$$
+q=\argmax_{p_k\in P}( \varphi(z)-\frac{\hat{\alpha} \sum_{i=1}^n \alpha_i \varphi(d_i)}{\sum_{i=1}^n \alpha_i})\star \varphi(p_k)\quad(3)
+$$
+这样运行速度就跟SiamRPN相当。这个结合律也启发我们以学习率$\beta_t$渐进地学习目标模板和干扰模板：
+$$
+q_{T+1}=\argmax_{p_k\in P}( \frac{\sum_{t=1}^T \beta_t \varphi(z_t)}{\sum_{t=1}^T \beta_t}-\frac{\sum_{t=1}^T \beta_t\hat{\alpha} \sum_{i=1}^n \alpha_i \varphi(d_{i,t})}{\sum_{t=1}^T \beta_t\sum_{i=1}^n \alpha_i})\star \varphi(p_k)\quad(4)
 $$
 
 ###  3.4 DaSiamRPN长时跟踪
@@ -99,7 +119,11 @@ $$
 
 使用ImageNet预训练的AlexNet-改。前三个卷积层固定，最后两个卷积层微调。训练了50个epoch，学习率在log空间从10^-2递减到10^-4。从VID和Youtube-BB中选取间隔小于100的图像对，做3-2节的裁剪处理。为了能处理灰度视频，25%的样本训练时转换成灰度。平移在12像素点内随机，缩放倍率在0.85到1.15之间随机。
 
-推理阶段，公式2的干扰因子设为0.5。TODO。短时阶段搜索区域255，失败case767。进入和离开失败case的阈值0.8和0.95。使用Pytorch实现，测试环境：
+推理阶段，公式2的干扰因子$\hat{\alpha}$设为0.5，$\alpha_i设为1$，$\beta_t$设为：
+$$
+\sum_{i=0}^{t-1}(\frac{\eta}{1-\eta})^i,\eta=0.01
+$$
+短时阶段搜索区域255，失败case767。进入和离开失败case的阈值0.8和0.95。使用Pytorch实现，测试环境：
 
 - Intel i7, 48G 内存，NVIDIA TITAN X.
 
