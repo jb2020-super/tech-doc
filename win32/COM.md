@@ -72,3 +72,5 @@ interface IDogManager : IUnknown
 - 未定义表示只能在main STA运行。Main STA是经常中第一个初始化的STA。
 
 In-process servers的情况，在创建对象之前，用户已经调用过了CoInitializeEx。如果用户的公寓和CLSID的兼容，那么在进程内激活请求时，CLSID可以直接在客户的公寓内实例化对象。这是最高效的情况，因为不需要代理。如果公寓模式不兼容，那么就会悄悄的在另一个公寓中实例化对象，并返回一个代理给客户。
+
+- 
