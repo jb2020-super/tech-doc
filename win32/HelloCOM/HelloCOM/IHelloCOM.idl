@@ -1,0 +1,48 @@
+import "oaidl.idl";
+import "ocidl.idl";
+
+
+[
+	uuid(77D4F182-CD59-4D51-8D14-37894692177C),
+	version(1.0)
+]
+library HelloCOMLib
+{
+	importlib("stdole2.tlb");
+
+	typedef enum
+	{
+		PRINT_COLOR_RED,
+		PRINT_COLOR_GREEN,
+		PRINT_COLOR_BLUE,
+		PRINT_COLOR_BLACK,
+	}PrintColor;
+
+	typedef struct
+	{
+		UINT32 width;
+		UINT32 height;
+	}Point2D;
+
+	[
+		uuid(24DABF07-7213-4B68-BA3F-FCBBC83DDA95)
+	]
+	coclass HelloCOM
+	{
+		[default] interface IHelloCOM;
+	};
+};
+
+[
+	object,
+	uuid(0F87688B-EF6B-4780-824E-7A0A2E8647E0)
+]
+interface IHelloCOM : IUnknown
+{
+	[propget] HRESULT Color([out, retval] PrintColor* pColor);
+	[propget] HRESULT Position([out, retval] Point2D* pos);
+	[propput] HRESULT Position([in] Point2D pos);
+	HRESULT Print([in] BSTR msg);
+
+	//HRESULT CreateSomeInterface([out] ISomething** ptr);
+};
