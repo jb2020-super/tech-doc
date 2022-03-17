@@ -96,3 +96,23 @@ https://docs.microsoft.com/en-us/windows/win32/directshow/factory-template-array
 
 - Platform需要和组件保持一致。假如组件的编译平台是x64，那么应用程序也需要时x64。注意不能是`Any CPU`，否则COM对象会创建失败。右键打开工程属性，将Build -> General -> Platform target 修改为x64.
 
+## FAQ
+
+### 1. COM对象创建失败
+
+- 检查manifest文件是否在
+- DLLMain可以进入，但是DllGetClassObject函数无法进入。使用工具Dependencies发现COM组件没有导出任何接口。检查工程设置发现，def文件没有添加到工程中。修改方法：右键打开工程属性页面，将Linker -> Input -> Module Definition File 项目修改为*.def文件的名字。
+
+### 2. CLSID链接失败
+
+添加 `#include <initguid.h>`
+
+### 3. error C2065: 'GUID_NULL': undeclared identifier
+
+使用CComPtr类型的时候报错。解决办法：将`initguid.h`放在`atlbase.h`后面
+
+```c++
+#include <atlbase.h>
+#include <initguid.h>
+```
+
