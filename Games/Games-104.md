@@ -18,3 +18,19 @@
 - Platform Layer
   - 文件系统差异
   - 图形API
+
+## 3. 如何构建游戏世界
+
+- Dynamic Game Objects
+- Static Game Object
+- Environment: Sky, Terrain, Vegetation。地形系统。天气系统。日夜变换系统。植被。
+- Everything is a Game Object(GO).统一抽象成GO
+- 如何描述一个物体。属性+行为。
+- Component Base。用组件化思想构建世界，而不是面向对象继承关系。 解决公共继承的问题。
+- Object-based Tick。Tick的时序问题。
+- Component-based tick. 并行处理，减少cache miss。每一种组件一起tick。流水线。
+- 事件机制，处理GO之间的交互（通信）。邮局系统。
+- 场景管理。 GO id + position。Hierarchical segmentation。层级结构。BVH(Bounding Volume Hierarchies)，Octree， BSP
+- 时序问题？最精妙。
+- Q&A。 
+  - Tick时间过长？分批延迟处理。
